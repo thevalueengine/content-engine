@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Value Engine — Content System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --dark: #092F4F;
+  --blue: #0BBBEF;
+  --blue-light: #E8F4FB;
+  --blue-mid: #B5D4F4;
+  --green: #3B6D11;
+  --green-light: #EAF3DE;
+  --amber: #854F0B;
+  --amber-light: #FAEEDA;
+  --surface: #F7F8FA;
+  --card: #FFFFFF;
+  --border: rgba(9,47,79,0.12);
+  --border-strong: rgba(9,47,79,0.25);
+  --text: #092F4F;
+  --text-2: #4A6580;
+  --text-3: #8DA3B8;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+
+/* LAYOUT */
+.shell { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+.sidebar { background: var(--dark); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 4px; position: fixed; top: 0; left: 0; height: 100vh; width: 220px; z-index: 10; }
+.main { margin-left: 220px; padding: 2rem; max-width: 960px; }
+
+/* SIDEBAR */
+.brand { padding: 0.5rem 0.75rem 1.5rem; }
+.brand-name { font-size: 15px; font-weight: 500; color: #fff; line-height: 1.3; }
+.brand-name span { color: var(--blue); }
+.brand-sub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 2px; letter-spacing: 0.3px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.55); transition: all 0.15s; border: none; background: none; width: 100%; text-align: left; font-family: 'DM Sans', sans-serif; }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: rgba(255,255,255,0.85); }
+.nav-item.active { background: rgba(11,187,239,0.15); color: #fff; font-weight: 500; }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+.nav-divider { height: 0.5px; background: rgba(255,255,255,0.08); margin: 8px 0; }
+.nav-section-label { font-size: 10px; color: rgba(255,255,255,0.25); text-transform: uppercase; letter-spacing: 0.8px; padding: 0 12px; margin: 8px 0 4px; }
+.sidebar-footer { margin-top: auto; padding: 0.75rem 12px 0; border-top: 0.5px solid rgba(255,255,255,0.08); font-size: 11px; color: rgba(255,255,255,0.25); line-height: 1.5; }
+
+/* PANELS */
+.panel { display: none; animation: fadeIn 0.2s ease; }
+.panel.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-header { margin-bottom: 1.5rem; }
+.page-title { font-size: 22px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+.page-sub { font-size: 13px; color: var(--text-2); }
+
+/* CARDS */
+.card { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-bottom: 1rem; }
+.card-title { font-size: 13px; font-weight: 500; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+/* FORM */
+.type-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1rem; }
+.type-btn { font-size: 12px; padding: 5px 14px; border-radius: 20px; border: 0.5px solid var(--border-strong); color: var(--text-2); background: none; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.type-btn:hover { border-color: var(--blue); color: var(--dark); }
+.type-btn.sel { background: var(--blue-light); border-color: var(--blue); color: var(--dark); font-weight: 500; }
+textarea, input[type=text] { width: 100%; border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); padding: 10px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--card); line-height: 1.6; outline: none; resize: none; transition: border-color 0.15s; }
+textarea:focus, input[type=text]:focus { border-color: var(--blue); }
+textarea::placeholder, input::placeholder { color: var(--text-3); }
+.btn-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; flex-wrap: wrap; }
+.btn-primary { font-size: 13px; padding: 9px 20px; border-radius: var(--radius-sm); border: none; background: var(--dark); color: #fff; cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: background 0.15s; }
+.btn-primary:hover { background: #0a3a60; }
+.btn-secondary { font-size: 13px; padding: 9px 14px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: none; color: var(--text-2); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.btn-secondary:hover { background: var(--surface); color: var(--text); }
+.btn-small { font-size: 11px; padding: 4px 12px; border-radius: var(--radius-sm); border: 0.5px solid var(--border); background: var(--card); color: var(--text-2); cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-small:hover { color: var(--text); }
+.toggle-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-2); cursor: pointer; margin-left: auto; }
+
+/* FLAGS */
+.flag { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; padding: 4px 12px; border-radius: 20px; margin-bottom: 14px; letter-spacing: 0.2px; }
+.flag.post { background: var(--blue-light); color: var(--dark); border: 0.5px solid var(--blue-mid); }
+.flag.store { background: var(--green-light); color: var(--green); border: 0.5px solid #97C459; }
+.flag.nl { background: var(--amber-light); color: var(--amber); border: 0.5px solid #EF9F27; }
+
+/* OUTPUT */
+.out-label { font-size: 10px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+.post-box { font-size: 14px; line-height: 1.75; color: var(--text); white-space: pre-wrap; background: var(--surface); border-radius: var(--radius-sm); padding: 14px 60px 14px 14px; margin-bottom: 10px; position: relative; border: 0.5px solid var(--border); }
+.copy-btn { position: absolute; top: 10px; right: 10px; font-size: 11px; padding: 3px 10px; border-radius: 6px; border: 0.5px solid var(--border-strong); background: var(--card); cursor: pointer; color: var(--text-2); font-family: 'DM Sans', sans-serif; }
+.pills { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.pill { font-size: 11px; padding: 3px 10px; border-radius: 20px; border: 0.5px solid var(--border); }
+.pill.p { background: var(--blue-light); border-color: var(--blue-mid); color: var(--dark); }
+.pill.d { background: var(--green-light); border-color: #97C459; color: var(--green); }
+.hook-alt { font-size: 13px; font-style: italic; color: var(--text-2); padding: 8px 12px; border-left: 2px solid var(--blue); margin: 6px 0 12px; }
+.tip { font-size: 13px; color: var(--text-2); padding: 8px 12px; background: var(--amber-light); border-radius: var(--radius-sm); margin-bottom: 12px; }
+
+/* PENDING */
+.pending-box { border: 0.5px solid var(--blue); border-radius: var(--radius); padding: 1.25rem; background: var(--blue-light); margin-top: 1rem; }
+.pending-title { font-size: 13px; font-weight: 500; color: var(--dark); margin-bottom: 10px; }
+.pending-preview { font-size: 13px; color: var(--dark); line-height: 1.6; white-space: pre-wrap; background: rgba(255,255,255,0.7); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 12px; max-height: 80px; overflow-y: auto; }
+.info-box { background: var(--blue-light); border: 0.5px solid var(--blue-mid); border-radius: var(--radius-sm); padding: 12px 14px; font-size: 13px; color: var(--text-2); margin-bottom: 1rem; }
+.info-box strong { color: var(--dark); }
+
+/* CALENDAR */
+.cal-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.cal-nav-g { display: flex; align-items: center; gap: 10px; }
+.cal-title { font-size: 16px; font-weight: 500; color: var(--text); }
+.nav-arrow { background: var(--card); border: 0.5px solid var(--border-strong); border-radius: var(--radius-sm); width: 30px; height: 30px; cursor: pointer; color: var(--text-2); font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.nav-arrow:hover { background: var(--surface); }
+.slot-info { font-size: 12px; color: var(--text-2); }
+.slot-info span { font-weight: 500; color: var(--text); }
+.week-block { margin-bottom: 2rem; }
+.week-lbl { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 0.5px solid var(--border); }
+.cur-badge { font-size: 10px; background: var(--blue-light); color: var(--dark); border: 0.5px solid var(--blue-mid); border-radius: 20px; padding: 2px 8px; }
+.day-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.day-col { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 10px; min-height: 150px; transition: border-color 0.15s; }
+.day-col.today { border-color: var(--blue); background: var(--blue-light); }
+.day-col.non-post { opacity: 0.4; }
+.dname { font-size: 10px; font-weight: 500; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.ddate { font-size: 11px; color: var(--text-3); margin-bottom: 8px; }
+.day-col.today .dname { color: var(--dark); }
+.day-col.today .ddate { color: var(--text-2); }
+.cal-item { border-radius: var(--radius-sm); padding: 8px; margin-bottom: 5px; cursor: pointer; border: 0.5px solid var(--border); background: var(--surface); transition: border-color 0.15s; }
+.day-col.today .cal-item { background: rgba(255,255,255,0.8); }
+.cal-item:hover { border-color: var(--blue); }
+.ci-pillar { font-size: 9px; font-weight: 500; color: var(--blue); margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+.ci-hook { font-size: 11px; color: var(--text); line-height: 1.4; margin-bottom: 4px; }
+.ci-footer { display: flex; align-items: center; justify-content: space-between; }
+.ci-status { font-size: 10px; color: var(--text-3); display: flex; align-items: center; gap: 4px; }
+.sdot { width: 5px; height: 5px; border-radius: 50%; background: var(--text-3); display: inline-block; }
+.sdot.draft { background: var(--blue); }
+.sdot.ready { background: var(--green); }
+.sdot.pub { background: var(--text-3); }
+.ci-img-thumb { width: 20px; height: 20px; border-radius: 4px; object-fit: cover; }
+.empty-d { font-size: 11px; color: var(--text-3); text-align: center; padding: 1.5rem 0.5rem; }
+.add-slot { font-size: 10px; color: var(--text-3); border: 0.5px dashed var(--border-strong); border-radius: var(--radius-sm); padding: 5px; text-align: center; cursor: pointer; margin-top: 4px; transition: all 0.15s; }
+.add-slot:hover { border-color: var(--blue); color: var(--blue); }
+.dash-day { font-size: 18px; color: var(--border-strong); text-align: center; padding: 2rem 0; }
+
+/* NL SECTION */
+.nl-cal-block { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1.25rem; margin-top: 1rem; }
+.nl-cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.nl-cal-title { font-size: 14px; font-weight: 500; color: var(--text); }
+.nl-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.nl-card { border: 0.5px solid var(--border); border-radius: var(--radius-sm); padding: 10px 12px; cursor: pointer; transition: border-color 0.15s; }
+.nl-card:hover { border-color: var(--amber); }
+.nl-type { font-size: 10px; font-weight: 500; color: var(--amber); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+.nl-topic { font-size: 13px; color: var(--text); line-height: 1.4; margin-bottom: 4px; }
+.nl-due { font-size: 11px; color: var(--text-3); }
+
+/* NEWSLETTER PANEL */
+.nl-type-row { display: flex; gap: 8px; margin-bottom: 1rem; }
+.nl-tb { font-size: 13px; padding: 6px 18px; border-radius: 20px; border: 0.5px solid var(--border-strong); color: var(--text-2); background: none; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.nl-tb.sel { background: var(--amber-light); border-color: #EF9F27; color: var(--amber); font-weight: 500; }
+.nl-subject-box { font-size: 14px; font-weight: 500; color: var(--text); background: var(--surface); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 10px; border: 0.5px solid var(--border); }
+.nl-preview-box { font-size: 13px; font-style: italic; color: var(--text-2); background: var(--surface); border-radius: var(--radius-sm); padding: 8px 14px; margin-bottom: 10px; border: 0.5px solid var(--border); }
+.nl-body-box { font-size: 14px; line-height: 1.8; color: var(--text); white-space: pre-wrap; background: var(--surface); border-radius: var(--radius-sm); padding: 14px 60px 14px 14px; position: relative; border: 0.5px solid var(--border); max-height: 400px; overflow-y: auto; }
+.archive-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border: 0.5px solid var(--border); border-radius: var(--radius-sm); margin-bottom: 8px; cursor: pointer; transition: border-color 0.15s; }
+.archive-item:hover { border-color: var(--amber); }
+.archive-meta { font-size: 10px; color: var(--amber); font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 2px; }
+.archive-title { font-size: 13px; color: var(--text); }
+
+/* BANK */
+.bank-filters { display: flex; gap: 6px; margin-bottom: 1rem; flex-wrap: wrap; }
+.bf { font-size: 12px; padding: 4px 14px; border-radius: 20px; border: 0.5px solid var(--border-strong); color: var(--text-2); background: none; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+.bf.active { background: var(--blue-light); border-color: var(--blue-mid); color: var(--dark); font-weight: 500; }
+.bank-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.bc { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem; position: relative; }
+.bc-cat { font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.bc-cat.insight { color: #1D9E75; }
+.bc-cat.story { color: var(--blue); }
+.bc-cat.casestudy { color: #D85A30; }
+.bc-cat.lifestyle { color: var(--amber); }
+.bc-idea { font-size: 13px; line-height: 1.5; color: var(--text); margin-bottom: 10px; }
+.bc-btns { display: flex; gap: 6px; }
+.bc-del { position: absolute; top: 10px; right: 10px; background: none; border: none; cursor: pointer; color: var(--text-3); font-size: 16px; line-height: 1; }
+.bc-del:hover { color: var(--text); }
+.empty-state { font-size: 13px; color: var(--text-3); text-align: center; padding: 3rem; grid-column: 1/-1; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(9,47,79,0.4); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 1rem; }
+.modal { background: var(--card); border-radius: var(--radius); padding: 1.5rem; max-width: 540px; width: 100%; border: 0.5px solid var(--border); max-height: 90vh; overflow-y: auto; }
+.modal h3 { font-size: 15px; font-weight: 500; margin-bottom: 1rem; }
+.modal-body { font-size: 13px; line-height: 1.75; color: var(--text); white-space: pre-wrap; max-height: 220px; overflow-y: auto; background: var(--surface); padding: 12px; border-radius: var(--radius-sm); margin-bottom: 1rem; border: 0.5px solid var(--border); }
+.modal-img { width: 100%; max-height: 160px; object-fit: cover; border-radius: var(--radius-sm); margin-bottom: 1rem; }
+.img-up { border: 0.5px dashed var(--border-strong); border-radius: var(--radius-sm); padding: 1rem; text-align: center; cursor: pointer; margin-bottom: 1rem; background: var(--surface); transition: border-color 0.15s; }
+.img-up:hover { border-color: var(--blue); }
+.img-up strong { font-size: 13px; color: var(--text-2); }
+.img-up p { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+.modal-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.stat-sel { font-size: 12px; padding: 5px 10px; border-radius: var(--radius-sm); border: 0.5px solid var(--border-strong); background: var(--card); color: var(--text); font-family: 'DM Sans', sans-serif; cursor: pointer; }
+
+@media (max-width: 700px) {
+  .shell { grid-template-columns: 1fr; }
+  .sidebar { position: static; width: 100%; height: auto; flex-direction: row; flex-wrap: wrap; padding: 1rem; }
+  .main { margin-left: 0; padding: 1rem; }
+  .day-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .bank-grid, .nl-cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<nav class="sidebar">
+  <div class="brand">
+    <div class="brand-name">the <span>value</span> engine</div>
+    <div class="brand-sub">Content System</div>
+  </div>
+  <button class="nav-item active" onclick="showPanel('input')"><span class="nav-icon">✏️</span> Input</button>
+  <button class="nav-item" onclick="showPanel('newsletter')"><span class="nav-icon">📧</span> Newsletter</button>
+  <button class="nav-item" onclick="showPanel('calendar')"><span class="nav-icon">📅</span> Calendar</button>
+  <button class="nav-item" onclick="showPanel('bank')"><span class="nav-icon">💡</span> Idea Bank</button>
+  <div class="nav-divider"></div>
+  <div class="nav-section-label">Status</div>
+  <div style="padding:0 12px;font-size:12px;color:rgba(255,255,255,0.4);line-height:1.6" id="sidebar-status">Loading...</div>
+  <div class="sidebar-footer">The Value Engine<br>thevalueengine.co.uk</div>
+</nav>
+
+<main class="main">
+
+<!-- INPUT -->
+<div class="panel active" id="panel-input">
+  <div class="page-header">
+    <div class="page-title">Input</div>
+    <div class="page-sub">Turn Ben's raw inputs into polished LinkedIn posts</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Input type</div>
+    <div class="type-row">
+      <button class="type-btn sel" onclick="selType(this,'voice note')">Voice note</button>
+      <button class="type-btn" onclick="selType(this,'photo/event')">Photo / event</button>
+      <button class="type-btn" onclick="selType(this,'client conversation')">Client conversation</button>
+      <button class="type-btn" onclick="selType(this,'idea')">Quick idea</button>
+      <button class="type-btn" onclick="selType(this,'client win')">Client win</button>
+    </div>
+    <div class="card-title">Ben's input</div>
+    <textarea id="main-input" style="min-height:100px" placeholder="Paste Ben's voice note, idea, or raw thought — as messy as it comes..."></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="generatePost()">Generate post ↗</button>
+      <button class="btn-secondary" onclick="storeIdea()">Store as idea</button>
+      <label class="toggle-label"><input type="checkbox" id="urgent-cb"> Post tomorrow</label>
+    </div>
+  </div>
+  <div class="info-box"><strong>How this works:</strong> Hit Generate — copy the prompt below into Claude.ai, copy the JSON response, paste it back into the field that appears here.</div>
+  <div id="pending-area" style="display:none">
+    <div class="pending-box">
+      <div class="pending-title">↓ Paste Claude's JSON response below once it appears in the chat</div>
+      <div class="pending-preview" id="pending-preview"></div>
+      <textarea id="paste-area" style="min-height:70px;margin-top:8px" placeholder='Paste JSON here — e.g. {"flag":"POST_TOMORROW",...}'></textarea>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn-primary" onclick="processPost()">Process response</button>
+        <button class="btn-secondary" onclick="cancelPending()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div id="output-area"></div>
+</div>
+
+<!-- NEWSLETTER -->
+<div class="panel" id="panel-newsletter">
+  <div class="page-header">
+    <div class="page-title">Newsletter & Blog</div>
+    <div class="page-sub">Generate full drafts — min. fortnightly, target weekly</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Content type</div>
+    <div class="nl-type-row">
+      <button class="nl-tb sel" onclick="selNLType(this,'newsletter')">Newsletter</button>
+      <button class="nl-tb" onclick="selNLType(this,'blog')">Blog post</button>
+    </div>
+    <div class="card-title">Topic or raw input</div>
+    <textarea id="nl-input" style="min-height:100px" placeholder="e.g. 'Why founders struggle to delegate even when they know they should' — or paste a voice note, client story, or idea bank item..."></textarea>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="generateNL()">Generate ↗</button>
+      <button class="btn-secondary" onclick="pullFromBank()">Pull from idea bank</button>
+    </div>
+  </div>
+  <div class="info-box"><strong>How this works:</strong> Hit Generate — copy the prompt into Claude.ai, paste the JSON response back below.</div>
+  <div id="nl-pending" style="display:none">
+    <div class="pending-box">
+      <div class="pending-title">↓ Paste Claude's newsletter JSON response below</div>
+      <textarea id="nl-paste" style="min-height:70px;margin-top:8px" placeholder='Paste JSON here — e.g. {"subject":"...","body":"...",...}'></textarea>
+      <div class="btn-row" style="margin-top:8px">
+        <button class="btn-primary" onclick="processNL()">Process response</button>
+        <button class="btn-secondary" onclick="cancelNLPending()">Cancel</button>
+      </div>
+    </div>
+  </div>
+  <div id="nl-output"></div>
+  <div style="margin-top:1.5rem">
+    <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:12px">Past drafts</div>
+    <div id="nl-archive"></div>
+  </div>
+</div>
+
+<!-- CALENDAR -->
+<div class="panel" id="panel-calendar">
+  <div class="cal-topbar">
+    <div class="cal-nav-g">
+      <button class="nav-arrow" onclick="changeView(-1)">&#8592;</button>
+      <div class="cal-title" id="cal-range"></div>
+      <button class="nav-arrow" onclick="changeView(1)">&#8594;</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="slot-info" id="slot-info"></div>
+      <button class="btn-secondary" onclick="showPanel('input')">+ Add post</button>
+    </div>
+  </div>
+  <div id="two-week-grid"></div>
+  <div class="nl-cal-block">
+    <div class="nl-cal-header">
+      <div class="nl-cal-title">Newsletter &amp; Blog</div>
+      <button class="btn-secondary" style="font-size:11px;padding:5px 12px" onclick="showPanel('newsletter')">Generate ↗</button>
+    </div>
+    <div class="nl-cards" id="nl-cal-items"></div>
+  </div>
+</div>
+
+<!-- BANK -->
+<div class="panel" id="panel-bank">
+  <div class="page-header">
+    <div class="page-title">Idea Bank</div>
+    <div class="page-sub">A growing store of topics, stories, and angles</div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+    <div class="bank-filters">
+      <button class="bf active" onclick="filterBank(this,'all')">All</button>
+      <button class="bf" onclick="filterBank(this,'insight')">Insight</button>
+      <button class="bf" onclick="filterBank(this,'story')">Story</button>
+      <button class="bf" onclick="filterBank(this,'casestudy')">Case study</button>
+      <button class="bf" onclick="filterBank(this,'lifestyle')">Lifestyle</button>
+    </div>
+    <button class="btn-secondary" onclick="suggestFromBank()">Suggest a post ↗</button>
+  </div>
+  <div class="bank-grid" id="bank-grid"></div>
+</div>
+
+</main>
+</div>
+<div id="modal-container"></div>
+
+<script>
+const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+const POST_DAYS=['Tuesday','Wednesday','Thursday'];
+
+const POST_PROMPT=`[CONTENT ENGINE] You are Ben Rotheray's content engine for The Value Engine. Respond ONLY with a JSON object — no explanation, no markdown, just raw JSON starting with { and ending with }.
+
+BEN'S VOICE: Warm, grounded, conversational. Short sentences. Line breaks. UK English. Never corporate. 0-2 emojis max. Words: flipping, brilliant, flat out, de-scramble, forward momentum. NEVER: hustle, grind, crushing it, synergy.
+
+AUDIENCE: Ambitious founders, 5-30 staff, service businesses. Desire: freedom. Fear: working this hard forever.
+
+PILLARS: The Messy Middle / The Operator Trap / Systems and Routines / Freedom and Mindset / Client Stories and Proof
+
+PRODUCTS: Growth Kickstarter (1497+VAT, 6-week clarity, one-page strategy) / TimeBuilder (1497+VAT, 7 hours back per week) / Growth Supercharger (1697+VAT/month, long-term co-pilot)
+
+POST STRUCTURE: Hook (1-2 lines) then real moment or insight then soft close. Not pushy.
+
+JSON: {"flag":"POST_TOMORROW","pillar":"pillar name","suggested_day":"Tuesday","post":"full post text","hook_alt":"alternative hook","improvement_tip":"one sentence","category":"insight"}
+flag = POST_TOMORROW or STORE_FOR_LATER | suggested_day = Tuesday/Wednesday/Thursday | category = insight/story/casestudy/lifestyle
+
+INPUT TO PROCESS:`;
+
+const NL_PROMPT=`[NEWSLETTER ENGINE] You are Ben Rotheray's newsletter writer for The Value Engine. Respond ONLY with a JSON object — no explanation, no markdown, just raw JSON starting with { and ending with }.
+
+BEN'S VOICE: Warm, grounded, conversational. UK English. Never corporate. Prose only — no bullet lists. Short paragraphs. Real examples. Human, not polished.
+
+NEWSLETTER STRUCTURE: 1) Relatable opening — a real moment or question (2-3 sentences) 2) The insight or story (3-4 paragraphs) 3) Practical takeaway (1-2 paragraphs) 4) Soft CTA
+
+LENGTH: 350-500 words newsletter. 500-700 words blog.
+
+PRODUCTS: Growth Kickstarter (1497+VAT) / TimeBuilder (7 hours back per week) / Growth Supercharger (1697+VAT/month)
+
+JSON: {"type":"newsletter","subject":"subject line","preview":"one sentence preview","body":"full body text","pillar":"pillar name","word_count":380}
+
+TOPIC:`;
+
+let inputType='voice note', nlType='newsletter';
+let calItems=[], ideaBank=[], nlArchive=[], viewOffset=0, currentFilter='all';
+let pendingUrgent=false, lastPost=null, lastNL=null;
+
+function showPanel(n){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+n).classList.add('active');
+  const btns=document.querySelectorAll('.nav-item');
+  const m={input:0,newsletter:1,calendar:2,bank:3};
+  if(m[n]!==undefined) btns[m[n]].classList.add('active');
+  if(n==='calendar') renderCalendar();
+  if(n==='bank') renderBank();
+  if(n==='newsletter') renderNLArchive();
+  updateSidebarStatus();
+}
+
+function selType(el,t){document.querySelectorAll('.type-btn').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');inputType=t;}
+function selNLType(el,t){document.querySelectorAll('.nl-tb').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');nlType=t;}
+
+function generatePost(){
+  const input=document.getElementById('main-input').value.trim();
+  if(!input){alert('Please add Ben\'s input first.');return;}
+  pendingUrgent=document.getElementById('urgent-cb').checked;
+  const prompt=`${POST_PROMPT}\nInput type: ${inputType}\n${pendingUrgent?'FLAG AS POST TOMORROW\n':''}Ben\'s input:\n${input}`;
+  document.getElementById('pending-preview').textContent=input.substring(0,180)+(input.length>180?'...':'');
+  document.getElementById('pending-area').style.display='block';
+  document.getElementById('paste-area').value='';
+  document.getElementById('output-area').innerHTML='';
+  copyToClipboard(prompt, 'Prompt copied — paste it into Claude.ai and copy the JSON response back here.');
+}
+
+function processPost(){
+  let raw=document.getElementById('paste-area').value.trim();
+  if(!raw){alert('Paste Claude\'s response first.');return;}
+  raw=cleanJSON(raw);
+  let r;
+  try{r=JSON.parse(raw);}catch(e){r={flag:'POST_TOMORROW',pillar:'The Messy Middle',suggested_day:'Tuesday',post:raw,hook_alt:'',improvement_tip:'',category:'insight'};}
+  if(pendingUrgent)r.flag='POST_TOMORROW';
+  lastPost=r;cancelPending();renderPostOutput(r);
+  if(r.flag==='STORE_FOR_LATER'){ideaBank.push({cat:r.category||'insight',idea:(r.post||'').substring(0,140),full:r.post||''});}
+  else{calItems.push({day:r.suggested_day||'Tuesday',pillar:r.pillar||'',hook:r.post.split('\n')[0],full:r.post,status:'Draft',img:null});}
+  saveState();updateSidebarStatus();
+}
+
+function cancelPending(){document.getElementById('pending-area').style.display='none';}
+
+function storeIdea(){
+  const v=document.getElementById('main-input').value.trim();if(!v)return;
+  ideaBank.push({cat:'insight',idea:v.substring(0,140),full:v});saveState();
+  document.getElementById('main-input').value='';
+  document.getElementById('output-area').innerHTML=`<div class="card"><span class="flag store">💡 Saved to idea bank</span></div>`;
+  updateSidebarStatus();
+}
+
+function renderPostOutput(r){
+  const isPost=r.flag==='POST_TOMORROW';
+  document.getElementById('output-area').innerHTML=`
+  <div class="card">
+    <span class="flag ${isPost?'post':'store'}">${isPost?'📅 Post tomorrow':'💡 Store for later'}</span>
+    <div style="margin-bottom:12px">
+      <div class="out-label">Draft post</div>
+      <div class="post-box" id="post-text">${esc(r.post)}<button class="copy-btn" onclick="copyEl('post-text')">Copy</button></div>
+      <div class="pills"><span class="pill p">▪ ${esc(r.pillar||'')}</span><span class="pill d">📅 ${esc(r.suggested_day||'')}</span></div>
+    </div>
+    ${r.hook_alt?`<div style="margin-bottom:12px"><div class="out-label">Alternative hook</div><div class="hook-alt">${esc(r.hook_alt)}</div></div>`:''}
+    ${r.improvement_tip?`<div style="margin-bottom:12px"><div class="out-label">Stronger next time</div><div class="tip">${esc(r.improvement_tip)}</div></div>`:''}
+    <div class="btn-row">
+      <button class="btn-primary" onclick="addToCalendar()">Add to calendar</button>
+      <button class="btn-secondary" onclick="saveToBankFromPost()">Save to idea bank</button>
+    </div>
+  </div>`;
+}
+
+function addToCalendar(){if(!lastPost)return;calItems.push({day:lastPost.suggested_day||'Tuesday',pillar:lastPost.pillar||'',hook:lastPost.post.split('\n')[0],full:lastPost.post,status:'Draft',img:null});saveState();showPanel('calendar');}
+function saveToBankFromPost(){if(!lastPost)return;ideaBank.push({cat:lastPost.category||'insight',idea:lastPost.post.substring(0,140),full:lastPost.post});saveState();showPanel('bank');}
+
+function generateNL(){
+  const input=document.getElementById('nl-input').value.trim();
+  if(!input){alert('Please add a topic or idea first.');return;}
+  const prompt=`${NL_PROMPT}\nContent type: ${nlType}\n${input}`;
+  document.getElementById('nl-pending').style.display='block';
+  document.getElementById('nl-paste').value='';
+  document.getElementById('nl-output').innerHTML='';
+  copyToClipboard(prompt,'Newsletter prompt copied — paste it into Claude.ai and copy the JSON response back here.');
+}
+
+function processNL(){
+  let raw=document.getElementById('nl-paste').value.trim();
+  if(!raw){alert('Paste Claude\'s response first.');return;}
+  raw=cleanJSON(raw);
+  let r;
+  try{r=JSON.parse(raw);}catch(e){r={type:nlType,subject:'Newsletter draft',preview:'',body:raw,pillar:'The Messy Middle',word_count:0};}
+  lastNL=r;cancelNLPending();renderNLOutput(r);
+  nlArchive.push({...r,date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})});
+  saveState();
+}
+
+function cancelNLPending(){document.getElementById('nl-pending').style.display='none';}
+
+function pullFromBank(){
+  if(!ideaBank.length){alert('No ideas in the bank yet.');return;}
+  document.getElementById('nl-input').value='Pick the strongest idea from these and write a '+nlType+':\n- '+ideaBank.slice(0,5).map(i=>i.idea).join('\n- ');
+}
+
+function renderNLOutput(r){
+  const wc=r.word_count||r.body.split(' ').length;
+  document.getElementById('nl-output').innerHTML=`
+  <div class="card">
+    <span class="flag nl">📧 ${r.type==='blog'?'Blog post':'Newsletter'} draft</span>
+    <div style="margin-bottom:10px"><div class="out-label">Subject line</div><div class="nl-subject-box">${esc(r.subject||'')}</div></div>
+    ${r.preview?`<div style="margin-bottom:10px"><div class="out-label">Preview text</div><div class="nl-preview-box">${esc(r.preview)}</div></div>`:''}
+    <div style="margin-bottom:10px">
+      <div class="out-label">Body — ${wc} words</div>
+      <div class="nl-body-box" id="nl-body">${esc(r.body)}<button class="copy-btn" onclick="copyEl('nl-body')">Copy</button></div>
+    </div>
+    <div class="pills"><span class="pill p">▪ ${esc(r.pillar||'')}</span><span class="pill" style="background:var(--amber-light);border-color:#EF9F27;color:var(--amber)">${r.type==='blog'?'Blog':'Newsletter'}</span></div>
+    <div class="btn-row">
+      <button class="btn-primary" onclick="copyFullNL()">Copy full draft</button>
+      <button class="btn-secondary" onclick="saveNLToBank()">Save topic to idea bank</button>
+    </div>
+  </div>`;
+}
+
+function copyFullNL(){if(!lastNL)return;const t='Subject: '+(lastNL.subject||'')+'\nPreview: '+(lastNL.preview||'')+'\n\n'+(lastNL.body||'');copyToClipboard(t,'Full newsletter draft copied!');}
+function saveNLToBank(){if(!lastNL)return;ideaBank.push({cat:'insight',idea:(lastNL.subject||'Newsletter topic').substring(0,140),full:lastNL.body});saveState();}
+
+function renderNLArchive(){
+  const el=document.getElementById('nl-archive');
+  if(!nlArchive.length){el.innerHTML='<div style="font-size:13px;color:var(--text-3);padding:1rem 0">No newsletters generated yet.</div>';return;}
+  el.innerHTML=nlArchive.slice().reverse().map((item,ri)=>{
+    const i=nlArchive.length-1-ri;
+    return `<div class="archive-item" onclick="previewNL(${i})">
+      <div><div class="archive-meta">${item.type==='blog'?'Blog':'Newsletter'} · ${item.date||''}</div><div class="archive-title">${esc(item.subject||'Draft')}</div></div>
+      <button class="btn-small">Preview</button>
+    </div>`;
+  }).join('');
+}
+
+function previewNL(idx){
+  const item=nlArchive[idx];if(!item)return;
+  showModalHTML(`<h3>${esc(item.subject||'Newsletter')}</h3>${item.preview?`<div style="font-size:12px;font-style:italic;color:var(--text-2);margin-bottom:10px">${esc(item.preview)}</div>`:''}<div class="modal-body">${esc(item.body)}</div><div class="modal-footer"><button class="btn-secondary" onclick="copyToClipboard(${JSON.stringify(item.body)}, 'Copied!')">Copy body</button><button class="btn-primary" onclick="closeModal()">Close</button></div>`);
+}
+
+function getMon(offset){
+  const now=new Date(),d=now.getDay();
+  const mon=new Date(now);mon.setDate(now.getDate()-(d===0?6:d-1)+offset*14);mon.setHours(0,0,0,0);return mon;
+}
+
+function changeView(dir){viewOffset+=dir;renderCalendar();}
+
+function renderCalendar(){
+  const mon=getMon(viewOffset);
+  const end=new Date(mon);end.setDate(mon.getDate()+13);
+  const fmt=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+  document.getElementById('cal-range').textContent=`${fmt(mon)} – ${fmt(end)}`;
+  const today=new Date();today.setHours(0,0,0,0);
+  const grid=document.getElementById('two-week-grid');grid.innerHTML='';
+  let total=0,filled=0;
+
+  for(let w=0;w<2;w++){
+    const wMon=new Date(mon);wMon.setDate(mon.getDate()+w*7);
+    const wFri=new Date(wMon);wFri.setDate(wMon.getDate()+4);
+    const isW0=viewOffset===0&&w===0,isW1=viewOffset===0&&w===1;
+    const wLabel=isW0?'This week':isW1?'Next week':`${fmt(wMon)} – ${fmt(wFri)}`;
+    const block=document.createElement('div');block.className='week-block';
+    const lbl=document.createElement('div');lbl.className='week-lbl';
+    lbl.innerHTML=`${wLabel}<span style="font-weight:400;color:var(--text-3)">${fmt(wMon)} – ${fmt(wFri)}</span>${isW0?'<span class="cur-badge">current</span>':''}`;
+    block.appendChild(lbl);
+    const dg=document.createElement('div');dg.className='day-grid';
+
+    for(let d=0;d<5;d++){
+      const cd=new Date(wMon);cd.setDate(wMon.getDate()+d);cd.setHours(0,0,0,0);
+      const dayName=DAYS[d];
+      const isPost=POST_DAYS.includes(dayName);
+      const isToday=cd.getTime()===today.getTime();
+      const isPast=cd<today;
+      const dateStr=cd.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+      if(isPost)total++;
+      const col=document.createElement('div');
+      col.className='day-col'+(isToday?' today':'')+((!isPost)?' non-post':'');
+      col.innerHTML=`<div class="dname">${dayName}</div><div class="ddate">${dateStr}</div>`;
+      if(!isPost){
+        col.innerHTML+=`<div class="dash-day">—</div>`;
+      } else {
+        const wk=`${w+viewOffset*2}`;
+        let shown=calItems.filter(i=>i.day===dayName&&i._wk===wk);
+        if(!shown.length){const un=calItems.filter(i=>i.day===dayName&&i._wk===undefined);if(un.length){shown=[un[0]];un[0]._wk=wk;saveState();}}
+        if(shown.length)filled++;
+        if(!shown.length){col.innerHTML+=`<div class="empty-d">${isPast&&!isToday?'—':'No post yet'}</div>`;}
+        else{shown.forEach(item=>{const el=document.createElement('div');el.className='cal-item';el.innerHTML=`<div class="ci-pillar">${esc(item.pillar)}</div><div class="ci-hook">${esc(item.hook.substring(0,55))}${item.hook.length>55?'…':''}</div><div class="ci-footer"><div class="ci-status"><span class="sdot ${item.status==='Published'?'pub':item.status==='Ready'?'ready':'draft'}"></span>${item.status||'Draft'}</div>${item.img?`<img class="ci-img-thumb" src="${item.img}" alt="">`:''}</div>`;el.onclick=()=>openModal(item);col.appendChild(el);});}
+        if(!isPast||isToday){const a=document.createElement('div');a.className='add-slot';a.textContent='+ Add post';a.onclick=()=>showPanel('input');col.appendChild(a);}
+      }
+      dg.appendChild(col);
+    }
+    block.appendChild(dg);grid.appendChild(block);
+  }
+  document.getElementById('slot-info').innerHTML=`<span>${filled}</span> of ${total} slots filled`;
+  renderNLCal();
+}
+
+function renderNLCal(){
+  const items=nlArchive.length?nlArchive.slice(-2).reverse().map(i=>({type:i.type,topic:i.subject,due:''})):[{type:'Newsletter',topic:'Generate inputs to surface newsletter topics',due:'Fortnightly minimum'},{type:'Blog',topic:'Pull from idea bank or a client story',due:'Fortnightly minimum'}];
+  document.getElementById('nl-cal-items').innerHTML=items.map(i=>`<div class="nl-card" onclick="showPanel('newsletter')"><div class="nl-type">${i.type==='blog'?'Blog':'Newsletter'}</div><div class="nl-topic">${esc(i.topic)}</div>${i.due?`<div class="nl-due">${i.due}</div>`:''}</div>`).join('');
+}
+
+function openModal(item){
+  const idx=calItems.indexOf(item);
+  showModalHTML(`
+    <h3>${esc(item.pillar||'Post')}</h3>
+    ${item.img?`<img class="modal-img" id="mimg" src="${item.img}" alt=""><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><span style="font-size:12px;color:var(--text-2)">Photo attached</span><button class="btn-small" onclick="removeImg(${idx})">Remove</button></div>`:
+    `<div class="img-up" onclick="document.getElementById('mfile').click()"><strong>Attach a photo</strong><p>JPG, PNG, WEBP — click to upload</p></div>`}
+    <input type="file" id="mfile" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="attachImg(event,${idx})">
+    <div class="modal-body">${esc(item.full||item.hook)}</div>
+    <div class="modal-meta">
+      <span class="pill p">▪ ${esc(item.pillar||'')}</span>
+      <span class="pill d">📅 ${esc(item.day||'')}</span>
+      <select class="stat-sel" onchange="calItems[${idx}].status=this.value;saveState()">
+        <option ${item.status==='Draft'?'selected':''}>Draft</option>
+        <option ${item.status==='Ready'?'selected':''}>Ready</option>
+        <option ${item.status==='Published'?'selected':''}>Published</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="copyToClipboard(${JSON.stringify(item.full||item.hook)},'Post copied!')">Copy post</button>
+      <button class="btn-secondary" onclick="calItems.splice(${idx},1);saveState();closeModal();renderCalendar()">Delete</button>
+      <button class="btn-primary" onclick="closeModal()">Done</button>
+    </div>`);
+}
+
+function attachImg(e,idx){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{calItems[idx].img=ev.target.result;saveState();closeModal();openModal(calItems[idx]);};r.readAsDataURL(f);}
+function removeImg(idx){calItems[idx].img=null;saveState();closeModal();openModal(calItems[idx]);}
+
+function showModalHTML(inner){
+  const mc=document.getElementById('modal-container');
+  mc.innerHTML=`<div class="modal-overlay" id="mov" onclick="if(event.target.id==='mov')closeModal()"><div class="modal">${inner}</div></div>`;
+}
+function closeModal(){document.getElementById('modal-container').innerHTML='';renderCalendar();}
+
+function renderBank(){
+  const g=document.getElementById('bank-grid');
+  const f=currentFilter==='all'?ideaBank:ideaBank.filter(i=>i.cat===currentFilter);
+  if(!f.length){g.innerHTML='<div class="empty-state">No ideas yet — generate content from the Input tab and ideas will appear here.</div>';return;}
+  g.innerHTML=f.map(item=>{
+    const i=ideaBank.indexOf(item);
+    return `<div class="bc"><button class="bc-del" onclick="ideaBank.splice(${i},1);saveState();renderBank()">×</button><div class="bc-cat ${item.cat}">${catLabel(item.cat)}</div><div class="bc-idea">${esc(item.idea)}</div><div class="bc-btns"><button class="btn-small" onclick="useIdea(${i})">Use for post ↗</button><button class="btn-small" onclick="useForNL(${i})">Use for newsletter ↗</button></div></div>`;
+  }).join('');
+}
+
+function filterBank(el,cat){document.querySelectorAll('.bf').forEach(b=>b.classList.remove('active'));el.classList.add('active');currentFilter=cat;renderBank();}
+function catLabel(c){return{insight:'Insight',story:'Story',casestudy:'Case study',lifestyle:'Lifestyle'}[c]||c;}
+function useIdea(i){document.getElementById('main-input').value=ideaBank[i].full||ideaBank[i].idea;showPanel('input');}
+function useForNL(i){document.getElementById('nl-input').value=ideaBank[i].full||ideaBank[i].idea;showPanel('newsletter');}
+function suggestFromBank(){
+  if(!ideaBank.length){alert('Add some inputs first.');return;}
+  document.getElementById('main-input').value='Suggest a post from my idea bank:\n- '+ideaBank.map(i=>i.idea).join('\n- ');
+  showPanel('input');generatePost();
+}
+
+function updateSidebarStatus(){
+  const posts=calItems.filter(i=>i.status!=='Published').length;
+  const ideas=ideaBank.length;
+  const nls=nlArchive.length;
+  document.getElementById('sidebar-status').innerHTML=`${posts} post${posts!==1?'s':''} in calendar<br>${ideas} idea${ideas!==1?'s':''} in bank<br>${nls} newsletter draft${nls!==1?'s':''}`;
+}
+
+function copyEl(id){
+  const el=document.getElementById(id);
+  const text=el.innerText.replace('Copy','').trim();
+  copyToClipboard(text,'Copied!');
+}
+
+function copyToClipboard(text, msg){
+  navigator.clipboard.writeText(text).then(()=>{
+    const toast=document.createElement('div');
+    toast.style.cssText='position:fixed;bottom:2rem;right:2rem;background:var(--dark);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-family:DM Sans,sans-serif;z-index:9999;animation:fadeIn 0.2s ease';
+    toast.textContent=msg||'Copied!';
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(),2000);
+  });
+}
+
+function cleanJSON(s){return s.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim().replace(/^[^{]*/,'').replace(/[^}]*$/,'');}
+function saveState(){try{localStorage.setItem('ve_v7_cal',JSON.stringify(calItems));localStorage.setItem('ve_v7_bank',JSON.stringify(ideaBank));localStorage.setItem('ve_v7_nl',JSON.stringify(nlArchive));}catch(e){}}
+function loadState(){try{const c=localStorage.getItem('ve_v7_cal');const b=localStorage.getItem('ve_v7_bank');const n=localStorage.getItem('ve_v7_nl');if(c)calItems=JSON.parse(c);if(b)ideaBank=JSON.parse(b);if(n)nlArchive=JSON.parse(n);}catch(e){}}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+loadState();renderCalendar();updateSidebarStatus();
+</script>
+</body>
+</html>
