@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Value Engine — Content Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1c1c1a;
+  --paper: #f6f3ee;
+  --cream: #ede9e0;
+  --accent: #2d6a4f;
+  --accent-hover: #1f5038;
+  --accent-light: #52b788;
+  --accent-pale: #e8f4ee;
+  --warm: #c17a3a;
+  --warm-pale: #fdf0e2;
+  --muted: #7a7468;
+  --border: #ddd8cf;
+  --white: #ffffff;
+  --shadow-sm: 0 1px 4px rgba(28,28,26,0.07);
+  --shadow-md: 0 4px 16px rgba(28,28,26,0.10);
+  --radius: 8px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 100vh;
+  font-size: 15px;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--ink);
+  padding: 0 32px;
+  height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  color: var(--paper);
+  letter-spacing: 0.01em;
+}
+.logo em { color: var(--accent-light); font-style: normal; }
+.notion-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.75rem;
+  color: #999;
+  background: rgba(255,255,255,0.07);
+  padding: 5px 12px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.notion-pill:hover { background: rgba(255,255,255,0.12); }
+.notion-pill .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #666;
+  transition: background 0.3s;
+}
+.notion-pill .dot.on { background: var(--accent-light); }
+.notion-pill span { color: #ccc; }
+.notion-pill.connected span { color: var(--accent-light); }
+
+/* ── TABS ── */
+nav {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  gap: 2px;
+}
+.tab {
+  padding: 13px 18px;
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  font-family: 'DM Sans', sans-serif;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── LAYOUT ── */
+main { max-width: 920px; margin: 0 auto; padding: 36px 24px 80px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* ── TYPE ── */
+.page-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+  color: var(--ink);
+}
+.page-sub {
+  font-size: 0.84rem;
+  color: var(--muted);
+  margin-bottom: 30px;
+  line-height: 1.55;
+}
+
+/* ── FORM ── */
+label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--ink);
+  background: var(--white);
+  transition: border-color 0.15s, box-shadow 0.15s;
+  margin-bottom: 18px;
+  appearance: auto;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
+}
+textarea { resize: vertical; min-height: 110px; line-height: 1.65; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ── BUTTONS ── */
+.btn {
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: var(--white); }
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-primary:disabled { background: #bbb; cursor: not-allowed; }
+.btn-ghost { background: var(--white); color: var(--ink); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-dark { background: var(--ink); color: var(--white); }
+.btn-dark:hover { background: #333; }
+.btn-dark:disabled { background: #999; cursor: not-allowed; }
+.btn-sm { padding: 6px 14px; font-size: 0.78rem; }
+.btn-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 6px; }
+
+/* ── CARD ── */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── BADGES ── */
+.badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--cream);
+  color: var(--muted);
+}
+.badge-green { background: var(--accent-pale); color: var(--accent); }
+.badge-warm { background: var(--warm-pale); color: var(--warm); }
+.badge-purple { background: #f0eaf8; color: #6b4fa0; }
+
+/* ── SPINNER ── */
+.loading {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 18px;
+}
+.loading.on { display: flex; }
+.spin {
+  width: 17px; height: 17px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── ALERT ── */
+.alert {
+  padding: 11px 15px;
+  border-radius: var(--radius);
+  font-size: 0.84rem;
+  margin-top: 14px;
+  display: none;
+}
+.alert.on { display: block; }
+.alert-ok { background: var(--accent-pale); color: var(--accent); }
+.alert-err { background: #fdecea; color: #b52a1c; }
+
+/* ════════════════════════════════════════════
+   INPUT TAB
+════════════════════════════════════════════ */
+.post-output { display: none; margin-top: 28px; }
+.post-output.on { display: block; }
+.post-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.post-body {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  white-space: pre-wrap;
+  border-left: 3px solid var(--accent);
+  padding-left: 18px;
+  color: var(--ink);
+  margin-bottom: 20px;
+}
+.sub-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.sub-text { font-size: 0.86rem; color: #555; line-height: 1.6; margin-bottom: 16px; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 18px 0; }
+
+/* ════════════════════════════════════════════
+   WEEK PLANNER
+════════════════════════════════════════════ */
+.planner-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.week-nav { display: flex; align-items: center; gap: 10px; }
+.week-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  min-width: 140px;
+  text-align: center;
+}
+.week-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 28px;
+}
+.day-col {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  min-height: 160px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.day-col.drag-over { border-color: var(--accent); background: var(--accent-pale); }
+.day-head {
+  padding: 10px 12px 8px;
+  border-bottom: 1px solid var(--border);
+  background: var(--paper);
+}
+.day-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+.day-date { font-size: 0.78rem; color: var(--muted); margin-top: 1px; }
+.day-body { padding: 8px; min-height: 120px; }
+
+.post-chip {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  cursor: grab;
+  transition: box-shadow 0.15s, background 0.15s;
+  position: relative;
+}
+.post-chip:hover { box-shadow: var(--shadow-md); background: #f0ece4; }
+.post-chip.dragging { opacity: 0.45; cursor: grabbing; }
+.chip-pillar {
+  font-size: 0.67rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+.chip-title { font-size: 0.78rem; line-height: 1.4; color: var(--ink); }
+.chip-remove {
+  position: absolute;
+  top: 5px; right: 7px;
+  font-size: 0.7rem;
+  color: var(--muted);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  background: none;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+}
+.post-chip:hover .chip-remove { opacity: 1; }
+
+.unscheduled-pool {
+  background: var(--white);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+.pool-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+.pool-chips { display: flex; flex-wrap: wrap; gap: 8px; min-height: 44px; }
+.pool-chip {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 12px;
+  cursor: grab;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: box-shadow 0.15s;
+}
+.pool-chip:hover { box-shadow: var(--shadow-sm); }
+.pool-chip.dragging { opacity: 0.4; }
+.pool-chip-pillar {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.push-bar {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.push-info { font-size: 0.85rem; color: var(--muted); }
+.push-info strong { color: var(--ink); }
+
+/* ════════════════════════════════════════════
+   NEWSLETTER TAB
+════════════════════════════════════════════ */
+.nl-out { display: none; margin-top: 28px; }
+.nl-out.on { display: block; }
+.nl-subject {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  margin-bottom: 6px;
+}
+.nl-preview { font-size: 0.84rem; color: var(--muted); font-style: italic; margin-bottom: 20px; }
+.nl-body { font-size: 0.9rem; line-height: 1.85; white-space: pre-wrap; }
+.nl-wc { font-size: 0.76rem; color: var(--muted); margin-top: 14px; text-align: right; }
+
+/* ════════════════════════════════════════════
+   IDEAS TAB
+════════════════════════════════════════════ */
+.idea-row { display: flex; gap: 10px; margin-bottom: 20px; }
+.idea-row input { margin-bottom: 0; flex: 1; }
+.idea-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  transition: box-shadow 0.15s;
+}
+.idea-item:hover { box-shadow: var(--shadow-sm); }
+.idea-txt { font-size: 0.87rem; line-height: 1.5; flex: 1; }
+.idea-acts { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* ════════════════════════════════════════════
+   SETTINGS TAB
+════════════════════════════════════════════ */
+.settings-section { margin-bottom: 28px; }
+.settings-section h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+.settings-section p {
+  font-size: 0.83rem;
+  color: var(--muted);
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 640px) {
+  .row2, .row3 { grid-template-columns: 1fr; }
+  .week-grid { grid-template-columns: 1fr 1fr; }
+  header { padding: 0 16px; }
+  main { padding: 20px 14px 60px; }
+  nav { padding: 0 10px; overflow-x: auto; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">The Value <em>Engine</em></div>
+  <div class="notion-pill" id="notionPill" onclick="showTab('settings')">
+    <div class="dot" id="notionDot"></div>
+    <span id="notionLabel">Notion not connected</span>
+  </div>
+</header>
+
+<nav>
+  <button class="tab active" data-tab="input" onclick="showTab('input')">✍️ Generate</button>
+  <button class="tab" data-tab="planner" onclick="showTab('planner')">📅 Week Planner</button>
+  <button class="tab" data-tab="newsletter" onclick="showTab('newsletter')">📩 Newsletter</button>
+  <button class="tab" data-tab="ideas" onclick="showTab('ideas')">💡 Ideas</button>
+  <button class="tab" data-tab="settings" onclick="showTab('settings')">⚙️ Settings</button>
+</nav>
+
+<main>
+
+<!-- ══ GENERATE ══ -->
+<div class="panel active" id="panel-input">
+  <div class="page-title">Generate a Post</div>
+  <p class="page-sub">Drop in a raw idea, voice note transcript, client story or observation. Claude writes it in Ben's voice — then drag it into the Week Planner when you're happy.</p>
+
+  <label>Raw input</label>
+  <textarea id="rawInput" placeholder="e.g. Had a call with a founder today. Said every decision still comes back to them even though they have 12 staff..."></textarea>
+
+  <div class="row2">
+    <div>
+      <label>Content Pillar</label>
+      <select id="pillarSel">
+        <option value="">Auto-select</option>
+        <option>The Messy Middle</option>
+        <option>The Operator Trap</option>
+        <option>Systems &amp; Routines</option>
+        <option>Freedom &amp; Mindset</option>
+        <option>Client Stories &amp; Proof</option>
+      </select>
+    </div>
+    <div>
+      <label>Post Type</label>
+      <select id="catSel">
+        <option value="">Auto-select</option>
+        <option value="insight">Insight</option>
+        <option value="story">Story</option>
+        <option value="casestudy">Case Study</option>
+        <option value="lifestyle">Lifestyle</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generatePost()">Generate Post</button>
+  </div>
+
+  <div class="loading" id="genLoading"><div class="spin"></div> Writing in Ben's voice…</div>
+
+  <div class="post-output card" id="postOutput">
+    <div class="post-meta">
+      <span class="badge badge-green" id="oPillar"></span>
+      <span class="badge badge-warm" id="oDay"></span>
+      <span class="badge badge-purple" id="oCat"></span>
+      <span class="badge" id="oFlag"></span>
+    </div>
+    <div class="post-body" id="oPost"></div>
+    <hr class="divider">
+    <div class="sub-label">Alternative Hook</div>
+    <div class="sub-text" id="oHook"></div>
+    <div class="sub-label">Improvement Tip</div>
+    <div class="sub-text" id="oTip"></div>
+    <hr class="divider">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="addToPlanner()">→ Add to Week Planner</button>
+      <button class="btn btn-ghost" onclick="copyPost()">Copy Post</button>
+      <button class="btn btn-ghost" onclick="saveIdea()">Save to Ideas</button>
+    </div>
+    <div class="alert" id="addedAlert"></div>
+  </div>
+</div>
+
+<!-- ══ WEEK PLANNER ══ -->
+<div class="panel" id="panel-planner">
+  <div class="planner-header">
+    <div>
+      <div class="page-title">Week Planner</div>
+      <p class="page-sub" style="margin-bottom:0">Drag posts onto the day you want them to go out. Then push the whole week to Notion.</p>
+    </div>
+    <div class="week-nav">
+      <button class="btn btn-ghost btn-sm" onclick="changeWeek(-1)">← Prev</button>
+      <div class="week-title" id="weekTitle"></div>
+      <button class="btn btn-ghost btn-sm" onclick="changeWeek(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- Unscheduled pool -->
+  <div class="unscheduled-pool">
+    <div class="pool-label">Unscheduled Posts — drag onto a day</div>
+    <div class="pool-chips" id="poolChips"
+      ondragover="event.preventDefault()" 
+      ondrop="dropToPool(event)">
+    </div>
+  </div>
+
+  <!-- Week grid -->
+  <div class="week-grid" id="weekGrid"></div>
+
+  <!-- Push bar -->
+  <div class="push-bar">
+    <div class="push-info"><strong id="scheduledCount">0</strong> posts scheduled this week</div>
+    <div class="btn-row" style="margin-top:0">
+      <button class="btn btn-dark" id="pushAllBtn" onclick="pushAllToNotion()" disabled>Push Week to Notion</button>
+      <button class="btn btn-ghost btn-sm" onclick="clearWeek()">Clear Week</button>
+    </div>
+  </div>
+
+  <div class="loading" id="pushLoading" style="margin-top:16px"><div class="spin"></div> Pushing to Notion…</div>
+  <div class="alert" id="pushAlert" style="margin-top:14px"></div>
+</div>
+
+<!-- ══ NEWSLETTER ══ -->
+<div class="panel" id="panel-newsletter">
+  <div class="page-title">Generate a Newsletter</div>
+  <p class="page-sub">Prose only, no bullet points. Ben's voice. 350–500 words for a newsletter, 500–700 for a blog.</p>
+
+  <label>What's this newsletter about?</label>
+  <textarea id="nlInput" placeholder="e.g. The moment a founder realises they've become the bottleneck. Had a great conversation with a client this week..."></textarea>
+
+  <div class="row2">
+    <div>
+      <label>Content Pillar</label>
+      <select id="nlPillar">
+        <option value="">Auto-select</option>
+        <option>The Messy Middle</option>
+        <option>The Operator Trap</option>
+        <option>Systems &amp; Routines</option>
+        <option>Freedom &amp; Mindset</option>
+        <option>Client Stories &amp; Proof</option>
+      </select>
+    </div>
+    <div>
+      <label>Type</label>
+      <select id="nlType">
+        <option value="newsletter">Newsletter (350–500 words)</option>
+        <option value="blog">Blog (500–700 words)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" onclick="generateNewsletter()">Generate Newsletter</button>
+  </div>
+
+  <div class="loading" id="nlLoading"><div class="spin"></div> Writing your newsletter…</div>
+
+  <div class="nl-out card" id="nlOut">
+    <div class="nl-subject" id="nlSubj"></div>
+    <div class="nl-preview" id="nlPrev"></div>
+    <hr class="divider">
+    <div class="nl-body" id="nlBody"></div>
+    <div class="nl-wc" id="nlWc"></div>
+    <hr class="divider">
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="copyNL()">Copy Newsletter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ IDEAS ══ -->
+<div class="panel" id="panel-ideas">
+  <div class="page-title">Idea Bank</div>
+  <p class="page-sub">Park ideas here before they're ready to write. Hit Use to send one straight to the Generate tab.</p>
+  <div class="idea-row">
+    <input type="text" id="newIdea" placeholder="Drop an idea here…" onkeydown="if(event.key==='Enter')addIdea()">
+    <button class="btn btn-primary" onclick="addIdea()">Add</button>
+  </div>
+  <div id="ideaList"></div>
+</div>
+
+<!-- ══ SETTINGS ══ -->
+<div class="panel" id="panel-settings">
+  <div class="page-title">Settings</div>
+  <p class="page-sub">Connect to your Notion Social Media Calendar.</p>
+
+  <div class="card settings-section">
+    <h3>Notion Integration</h3>
+    <p>Your integration token and database ID are used to push posts directly into your Notion calendar. These are saved in your browser.</p>
+    <label>Integration Token</label>
+    <input type="password" id="sToken" placeholder="ntn_ or secret_…" oninput="saveSettings()">
+    <label>Database ID</label>
+    <input type="text" id="sDb" placeholder="32-character database ID" oninput="saveSettings()">
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="testNotion()">Test Connection</button>
+    </div>
+    <div class="alert" id="testAlert"></div>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let currentPost = null;
+let currentNL = null;
+let weekOffset = 0;
+let ideas = JSON.parse(localStorage.getItem('ve_ideas') || '[]');
+
+// pool = unscheduled posts [{id,pillar,title,post,suggested_day}]
+// scheduled = {YYYY-MM-DD: [{id,pillar,title,post}]}
+let pool = JSON.parse(localStorage.getItem('ve_pool') || '[]');
+let scheduled = JSON.parse(localStorage.getItem('ve_sched') || '{}');
+
+// Load saved settings
+const tok = localStorage.getItem('ve_tok') || '';
+const db  = localStorage.getItem('ve_db')  || '';
+document.getElementById('sToken').value = tok;
+document.getElementById('sDb').value = db;
+
+updateNotionUI();
+renderPlanner();
+renderIdeas();
+
+// ═══════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════
+function showTab(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  document.querySelector(`[data-tab="${id}"]`).classList.add('active');
+  if (id === 'planner') renderPlanner();
+  if (id === 'ideas') renderIdeas();
+}
+
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+function saveSettings() {
+  localStorage.setItem('ve_tok', document.getElementById('sToken').value);
+  localStorage.setItem('ve_db', document.getElementById('sDb').value);
+  updateNotionUI();
+}
+
+function updateNotionUI() {
+  const t = document.getElementById('sToken').value;
+  const ok = t && (t.startsWith('ntn_') || t.startsWith('secret_'));
+  const dot = document.getElementById('notionDot');
+  const lbl = document.getElementById('notionLabel');
+  const pill = document.getElementById('notionPill');
+  const pushBtn = document.getElementById('pushAllBtn');
+  dot.className = 'dot' + (ok ? ' on' : '');
+  lbl.textContent = ok ? 'Notion connected' : 'Notion not connected';
+  pill.className = 'notion-pill' + (ok ? ' connected' : '');
+  if (pushBtn) pushBtn.disabled = !ok;
+}
+
+async function testNotion() {
+  const t = document.getElementById('sToken').value;
+  const d = document.getElementById('sDb').value;
+  const el = document.getElementById('testAlert');
+  el.className = 'alert on'; el.textContent = 'Testing…';
+  try {
+    const r = await fetch(`https://notion-proxy.ben-e48.workers.dev/v1/databases/${d}`, {
+      headers: { 'Authorization': `Bearer ${t}`, 'Notion-Version': '2022-06-28' }
+    });
+    if (r.ok) {
+      const data = await r.json();
+      el.className = 'alert on alert-ok';
+      el.textContent = `✓ Connected to "${data.title?.[0]?.plain_text || 'your database'}" successfully.`;
+      saveSettings();
+    } else {
+      const err = await r.json();
+      el.className = 'alert on alert-err';
+      el.textContent = `✗ ${err.message || 'Check your token and database ID.'}`;
+    }
+  } catch(e) {
+    el.className = 'alert on alert-err';
+    el.textContent = '✗ Network error. Is the page served over http/https?';
+  }
+}
+
+// ═══════════════════════════════════════════
+// GENERATE POST
+// ═══════════════════════════════════════════
+async function generatePost() {
+  const raw = document.getElementById('rawInput').value.trim();
+  if (!raw) { alert('Add some raw input first.'); return; }
+  const pillar = document.getElementById('pillarSel').value;
+  const cat = document.getElementById('catSel').value;
+
+  document.getElementById('genLoading').classList.add('on');
+  document.getElementById('postOutput').classList.remove('on');
+
+  const sys = `You are the content engine for Ben Rotheray of The Value Engine. Generate a LinkedIn post in Ben's voice.
+
+VOICE: Warm, grounded, conversational. UK English. Short sentences with line breaks. Never corporate. 0-2 emojis max.
+USE: flipping, brilliant, flat out, co-create, forward momentum, right-sized, de-scramble
+NEVER: hustle, grind, crushing it, synergy, game-changing, leverage, circle back, touch base, actionable insights
+
+STRUCTURE: Hook (1-2 lines) → Real moment → Insight → Soft CTA
+
+PILLARS: The Messy Middle | The Operator Trap | Systems & Routines | Freedom & Mindset | Client Stories & Proof
+
+CTAs (rotate):
+- "This is exactly what we fix in the Growth Kickstarter."
+- "Happy to share how we approach this — just drop me a message."
+- "If this sounds familiar, it might be worth a conversation."
+- "Book a free call at thevalueengine.co.uk"
+
+Return ONLY valid JSON, no markdown:
+{"flag":"POST_TOMORROW","pillar":"pillar name","suggested_day":"Tuesday","post":"full post text","hook_alt":"alternative hook","improvement_tip":"one sentence","category":"insight"}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: sys,
+        messages: [{ role: 'user', content: `Input: ${raw}${pillar?'\nPillar: '+pillar:''}${cat?'\nCategory: '+cat:''}` }]
+      })
+    });
+    const data = await res.json();
+    const txt = data.content.map(i => i.text||'').join('');
+    currentPost = JSON.parse(txt.replace(/```json|```/g,'').trim());
+
+    document.getElementById('oPillar').textContent = currentPost.pillar;
+    document.getElementById('oDay').textContent = currentPost.suggested_day;
+    document.getElementById('oCat').textContent = currentPost.category;
+    document.getElementById('oFlag').textContent = currentPost.flag === 'POST_TOMORROW' ? '🟢 Post tomorrow' : '🟡 Store for later';
+    document.getElementById('oPost').textContent = currentPost.post;
+    document.getElementById('oHook').textContent = currentPost.hook_alt;
+    document.getElementById('oTip').textContent = currentPost.improvement_tip;
+    document.getElementById('addedAlert').className = 'alert';
+    document.getElementById('postOutput').classList.add('on');
+  } catch(e) {
+    alert('Something went wrong. Try again.'); console.error(e);
+  }
+  document.getElementById('genLoading').classList.remove('on');
+}
+
+function addToPlanner() {
+  if (!currentPost) return;
+  const id = 'p_' + Date.now();
+  const title = currentPost.post.split('\n')[0].slice(0, 60);
+  pool.push({ id, pillar: currentPost.pillar, title, post: currentPost.post, suggested_day: currentPost.suggested_day });
+  localStorage.setItem('ve_pool', JSON.stringify(pool));
+  const el = document.getElementById('addedAlert');
+  el.className = 'alert on alert-ok';
+  el.textContent = '✓ Added to Week Planner. Head to the Planner tab to assign it a day.';
+  renderPlanner();
+}
+
+function copyPost() {
+  if (!currentPost) return;
+  navigator.clipboard.writeText(currentPost.post).then(() => {
+    const el = document.getElementById('addedAlert');
+    el.className = 'alert on alert-ok';
+    el.textContent = '✓ Copied to clipboard.';
+  });
+}
+
+function saveIdea() {
+  if (!currentPost) return;
+  ideas.unshift({ id: Date.now(), text: currentPost.post.split('\n')[0].slice(0,120) });
+  localStorage.setItem('ve_ideas', JSON.stringify(ideas));
+  const el = document.getElementById('addedAlert');
+  el.className = 'alert on alert-ok';
+  el.textContent = '✓ Saved to Idea Bank.';
+}
+
+// ═══════════════════════════════════════════
+// WEEK PLANNER
+// ═══════════════════════════════════════════
+function getWeekDates(offset) {
+  const today = new Date();
+  const mon = new Date(today);
+  mon.setDate(today.getDate() - ((today.getDay() + 6) % 7) + offset * 7);
+  return Array.from({length:5}, (_,i) => { const d = new Date(mon); d.setDate(mon.getDate()+i); return d; });
+}
+
+function dateStr(d) { return d.toISOString().split('T')[0]; }
+
+function renderPlanner() {
+  const days = getWeekDates(weekOffset);
+  const dayNames = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const wt = document.getElementById('weekTitle');
+  wt.textContent = weekOffset === 0 ? 'This Week' : weekOffset === 1 ? 'Next Week' : weekOffset === -1 ? 'Last Week' : days[0].toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+
+  // Pool
+  const poolEl = document.getElementById('poolChips');
+  poolEl.innerHTML = pool.length ? pool.map(p => `
+    <div class="pool-chip" draggable="true" id="chip-${p.id}" ondragstart="dragStart(event,'${p.id}','pool')">
+      <span class="pool-chip-pillar">${p.pillar}</span>
+      <span>${p.title.slice(0,45)}…</span>
+    </div>`).join('') : '<span style="font-size:0.8rem;color:var(--muted)">No unscheduled posts yet — generate one first.</span>';
+
+  // Grid
+  const grid = document.getElementById('weekGrid');
+  grid.innerHTML = days.map((d,i) => {
+    const ds = dateStr(d);
+    const posts = (scheduled[ds] || []);
+    return `<div class="day-col" id="day-${ds}"
+      ondragover="event.preventDefault();this.classList.add('drag-over')"
+      ondragleave="this.classList.remove('drag-over')"
+      ondrop="dropToDay(event,'${ds}')">
+      <div class="day-head">
+        <div class="day-name">${dayNames[i]}</div>
+        <div class="day-date">${d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>
+      </div>
+      <div class="day-body">
+        ${posts.map(p => `<div class="post-chip" draggable="true" id="chip-${p.id}" ondragstart="dragStart(event,'${p.id}','${ds}')">
+          <button class="chip-remove" onclick="removeFromDay('${ds}','${p.id}')">✕</button>
+          <div class="chip-pillar">${p.pillar}</div>
+          <div class="chip-title">${p.title.slice(0,55)}…</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Count
+  const count = days.reduce((n,d) => n + (scheduled[dateStr(d)]||[]).length, 0);
+  document.getElementById('scheduledCount').textContent = count;
+  const tok = document.getElementById('sToken').value;
+  const ok = tok && (tok.startsWith('ntn_') || tok.startsWith('secret_'));
+  document.getElementById('pushAllBtn').disabled = !(ok && count > 0);
+}
+
+let draggingId = null;
+let draggingFrom = null;
+
+function dragStart(e, id, from) {
+  draggingId = id;
+  draggingFrom = from;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => { const el = document.getElementById('chip-'+id); if(el) el.classList.add('dragging'); }, 0);
+}
+
+function dropToDay(e, ds) {
+  e.preventDefault();
+  const col = document.getElementById('day-'+ds);
+  if (col) col.classList.remove('drag-over');
+  if (!draggingId) return;
+
+  let post = null;
+
+  if (draggingFrom === 'pool') {
+    const idx = pool.findIndex(p => p.id === draggingId);
+    if (idx === -1) return;
+    post = pool.splice(idx, 1)[0];
+    localStorage.setItem('ve_pool', JSON.stringify(pool));
+  } else {
+    // moving from another day
+    const src = scheduled[draggingFrom] || [];
+    const idx = src.findIndex(p => p.id === draggingId);
+    if (idx === -1) return;
+    post = src.splice(idx, 1)[0];
+    scheduled[draggingFrom] = src;
+  }
+
+  if (!scheduled[ds]) scheduled[ds] = [];
+  scheduled[ds].push(post);
+  localStorage.setItem('ve_sched', JSON.stringify(scheduled));
+  draggingId = null; draggingFrom = null;
+  renderPlanner();
+}
+
+function dropToPool(e) {
+  e.preventDefault();
+  if (!draggingId || draggingFrom === 'pool') return;
+  const src = scheduled[draggingFrom] || [];
+  const idx = src.findIndex(p => p.id === draggingId);
+  if (idx === -1) return;
+  const post = src.splice(idx, 1)[0];
+  scheduled[draggingFrom] = src;
+  pool.push(post);
+  localStorage.setItem('ve_pool', JSON.stringify(pool));
+  localStorage.setItem('ve_sched', JSON.stringify(scheduled));
+  draggingId = null; draggingFrom = null;
+  renderPlanner();
+}
+
+function removeFromDay(ds, id) {
+  const src = scheduled[ds] || [];
+  const idx = src.findIndex(p => p.id === id);
+  if (idx === -1) return;
+  const post = src.splice(idx, 1)[0];
+  scheduled[ds] = src;
+  pool.push(post);
+  localStorage.setItem('ve_sched', JSON.stringify(scheduled));
+  localStorage.setItem('ve_pool', JSON.stringify(pool));
+  renderPlanner();
+}
+
+function changeWeek(dir) { weekOffset += dir; renderPlanner(); }
+
+function clearWeek() {
+  if (!confirm('Move all posts for this week back to unscheduled?')) return;
+  const days = getWeekDates(weekOffset);
+  days.forEach(d => {
+    const ds = dateStr(d);
+    if (scheduled[ds]) { pool.push(...scheduled[ds]); delete scheduled[ds]; }
+  });
+  localStorage.setItem('ve_sched', JSON.stringify(scheduled));
+  localStorage.setItem('ve_pool', JSON.stringify(pool));
+  renderPlanner();
+}
+
+// ═══════════════════════════════════════════
+// PUSH ALL TO NOTION
+// ═══════════════════════════════════════════
+async function pushAllToNotion() {
+  const tok = document.getElementById('sToken').value;
+  const dbId = document.getElementById('sDb').value;
+  const days = getWeekDates(weekOffset);
+  const loadEl = document.getElementById('pushLoading');
+  const alertEl = document.getElementById('pushAlert');
+
+  const toPost = [];
+  days.forEach(d => {
+    const ds = dateStr(d);
+    (scheduled[ds]||[]).forEach(p => toPost.push({ ...p, date: ds }));
+  });
+
+  if (!toPost.length) { alertEl.className='alert on alert-err'; alertEl.textContent='No posts scheduled this week.'; return; }
+
+  loadEl.classList.add('on');
+  alertEl.className = 'alert';
+
+  let ok = 0, fail = 0;
+
+  for (const p of toPost) {
+    const body = {
+      parent: { database_id: dbId },
+      properties: {
+        Name: { title: [{ text: { content: p.title } }] },
+        Platform: { multi_select: [{ name: 'LinkedIn 📸' }] },
+        Status: { status: { name: 'To schedule' } },
+        Area: { select: { name: p.pillar } },
+        Date: { date: { start: p.date } }
+      },
+      children: [{
+        object: 'block', type: 'paragraph',
+        paragraph: { rich_text: [{ type: 'text', text: { content: p.post } }] }
+      }]
+    };
+    try {
+      const r = await fetch('https://notion-proxy.ben-e48.workers.dev/v1/pages', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${tok}`, 'Content-Type': 'application/json', 'Notion-Version': '2022-06-28' },
+        body: JSON.stringify(body)
+      });
+      if (r.ok) {
+        ok++;
+        // Remove from scheduled
+        scheduled[p.date] = (scheduled[p.date]||[]).filter(x => x.id !== p.id);
+      } else { fail++; }
+    } catch(e) { fail++; }
+  }
+
+  localStorage.setItem('ve_sched', JSON.stringify(scheduled));
+  loadEl.classList.remove('on');
+
+  if (fail === 0) {
+    alertEl.className = 'alert on alert-ok';
+    alertEl.textContent = `✓ ${ok} post${ok>1?'s':''} pushed to Notion successfully. Cherry can pick them up now.`;
+  } else {
+    alertEl.className = 'alert on alert-err';
+    alertEl.textContent = `${ok} pushed, ${fail} failed. Check your Notion connection in Settings.`;
+  }
+  renderPlanner();
+}
+
+// ═══════════════════════════════════════════
+// NEWSLETTER
+// ═══════════════════════════════════════════
+async function generateNewsletter() {
+  const raw = document.getElementById('nlInput').value.trim();
+  if (!raw) { alert('Add some input first.'); return; }
+  const pillar = document.getElementById('nlPillar').value;
+  const type = document.getElementById('nlType').value;
+
+  document.getElementById('nlLoading').classList.add('on');
+  document.getElementById('nlOut').classList.remove('on');
+
+  const sys = `You are the content engine for Ben Rotheray of The Value Engine. Write a ${type} in Ben's voice.
+
+VOICE: Warm, grounded, conversational. UK English. Short paragraphs. Real examples. Prose only — never bullet points.
+STRUCTURE: Relatable opening (2-3 sentences) → Insight/story (3-4 paragraphs) → Practical takeaway (1-2 paragraphs) → Soft CTA
+LENGTH: ${type==='newsletter'?'350-500':'500-700'} words
+NEVER: hustle, grind, crushing it, synergy, game-changing, leverage, circle back, touch base, actionable insights
+
+Return ONLY valid JSON, no markdown:
+{"type":"newsletter","subject":"subject line","preview":"one sentence preview","body":"full body with paragraph breaks as \\n\\n","pillar":"pillar name","word_count":380}`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: sys,
+        messages: [{ role: 'user', content: `Topic: ${raw}${pillar?'\nPillar: '+pillar:''}` }]
+      })
+    });
+    const data = await res.json();
+    const txt = data.content.map(i=>i.text||'').join('');
+    currentNL = JSON.parse(txt.replace(/```json|```/g,'').trim());
+    document.getElementById('nlSubj').textContent = currentNL.subject;
+    document.getElementById('nlPrev').textContent = currentNL.preview;
+    document.getElementById('nlBody').textContent = currentNL.body;
+    document.getElementById('nlWc').textContent = `~${currentNL.word_count} words · ${currentNL.pillar}`;
+    document.getElementById('nlOut').classList.add('on');
+  } catch(e) { alert('Something went wrong. Try again.'); console.error(e); }
+  document.getElementById('nlLoading').classList.remove('on');
+}
+
+function copyNL() {
+  if (!currentNL) return;
+  navigator.clipboard.writeText(`Subject: ${currentNL.subject}\n\n${currentNL.body}`);
+}
+
+// ═══════════════════════════════════════════
+// IDEAS
+// ═══════════════════════════════════════════
+function addIdea() {
+  const el = document.getElementById('newIdea');
+  const val = el.value.trim();
+  if (!val) return;
+  ideas.unshift({ id: Date.now(), text: val });
+  localStorage.setItem('ve_ideas', JSON.stringify(ideas));
+  el.value = '';
+  renderIdeas();
+}
+
+function deleteIdea(id) {
+  ideas = ideas.filter(i => i.id !== id);
+  localStorage.setItem('ve_ideas', JSON.stringify(ideas));
+  renderIdeas();
+}
+
+function useIdea(text) {
+  document.getElementById('rawInput').value = text;
+  showTab('input');
+}
+
+function renderIdeas() {
+  const el = document.getElementById('ideaList');
+  if (!ideas.length) {
+    el.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">No ideas saved yet.</p>';
+    return;
+  }
+  el.innerHTML = ideas.map(i => `
+    <div class="idea-item">
+      <div class="idea-txt">${i.text}</div>
+      <div class="idea-acts">
+        <button class="btn btn-ghost btn-sm" onclick="useIdea(${JSON.stringify(i.text)})">Use</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteIdea(${i.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+</script>
+</body>
+</html>
